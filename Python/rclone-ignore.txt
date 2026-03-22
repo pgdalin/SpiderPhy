@@ -1,0 +1,5 @@
+.venv/**
+spider_phy_processed_data.csv
+scripts/.vscode/**
+scripts.code-workspace
+

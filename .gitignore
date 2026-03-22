@@ -1,0 +1,6 @@
+Python/.venv/
+osf_files/
+R/renv/library/
+R/.Rproj.user/
+R/Rhistory
+__pycache__/
