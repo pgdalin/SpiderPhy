@@ -1,7 +1,12 @@
-Python/.venv/
 osf_files/
+
+Python/.venv/
+Python/.git/
+Python/rclone-ignore.txt
+Python/scripts/.vscode/
+Python/scripts/scripts.code-workspace
+
 R/renv/library/
 R/.Rproj.user/
-R/Rhistory
-__pycache__/
-.Rproj.user
+R/.Rhistory
+R/.Rprofile
