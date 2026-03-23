@@ -1,7 +1,6 @@
 osf_files/
 
 Python/.venv/
-Python/.git/
 Python/rclone-ignore.txt
 Python/scripts/.vscode/
 Python/scripts/scripts.code-workspace
