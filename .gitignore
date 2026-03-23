@@ -4,3 +4,4 @@ R/renv/library/
 R/.Rproj.user/
 R/Rhistory
 __pycache__/
+.Rproj.user

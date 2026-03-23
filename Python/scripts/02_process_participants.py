@@ -8,8 +8,6 @@ from scipy.signal import find_peaks # Allows to find the heartrate
 # Setting paths.
 
 WORKING_DIRECTORY = os.path.abspath('../../')
-
-print(os.listdir(WORKING_DIRECTORY))
 FILES_DIRECTORY = os.path.join(WORKING_DIRECTORY, "osf_files/lsl_physio_data/")
 SAMPLING_RATE = 5000
 OUTPUT_PATH = os.path.join(WORKING_DIRECTORY, "Python/output/", "processed_physio.csv")
@@ -37,13 +35,11 @@ def extract_trial_stats(ECG_DATA, TIME_STAMP, MARKERS_STRUCT):
         'time': times
     })
 
-    df_events['duration'] = df_events['time'].diff(periods=-1).abs() # We calculate the duration of each events.
-
-    stimuli = df_events[df_events['duration'].round(1) == 5.0] # We keep only those who correspond to the display of a stimuli.
+    events_to_process = df_events[df_events['events'].isin([0, 1])].copy()
 
     trial_results = [] # We initiate a list to append the results at each iteration.
 
-    for i, row in stimuli.iterrows(): # We iteration on each rows of the new df with only the datapoints of trials.
+    for i, row in events_to_process.iterrows(): # We iteration on each rows of the new df with only the datapoints of trials.
 
         start_t = row['time'] # We define the starting time of the time window.
         end_t = start_t + 5.0 # From the latter, we define the ending time.
@@ -54,7 +50,7 @@ def extract_trial_stats(ECG_DATA, TIME_STAMP, MARKERS_STRUCT):
 
         if len(segment) > 0:
 
-            peaks, _ = find_peaks(segment['ECG'], distance = 0.3 * SAMPLING_RATE, prominence = 0.5) # We retrieve the peaks of the ECG for the trial.
+            peaks, _ = find_peaks(segment['ECG'], distance = 0.7 * SAMPLING_RATE, prominence = 0.5) # We retrieve the peaks of the ECG for the trial.
             n_peaks = len(peaks) # len() provides us with the number of heart pulsation for a 5s trial.
 
             trial_results.append({
@@ -63,11 +59,11 @@ def extract_trial_stats(ECG_DATA, TIME_STAMP, MARKERS_STRUCT):
 
                 'trial_index': i,
                 'marker_code': row['events'], 
+                'is_baseline': 1 if row['events'] == 0 else 0,
 
                 # ECG variables
 
                 'ecg_amplitude': segment['ECG'].std(), 
-                'peaks': (n_peaks/5) * 60, # Heart rate per minute.
 
                 # GSR variables
 
@@ -76,7 +72,11 @@ def extract_trial_stats(ECG_DATA, TIME_STAMP, MARKERS_STRUCT):
 
                 # Respiratory variables
 
-                'resp_intensity': segment['Resp'].std() # Variability of breathing frequency.
+                'resp_intensity': segment['Resp'].std(), # Variability of breathing frequency.
+
+                # Pulse variables
+
+                'n_peaks': n_peaks/5 * 60
 
             })
             
@@ -117,26 +117,42 @@ def process_participants(FILE_NAME):
 
 if __name__ == "__main__":
 
-    if not os.path.exists(FILES_DIRECTORY): # Checking if the path actually exists.
+    # To test on only one selected file, add file name here.
+    TEST_FILE = "ID_001_lsl_data.mat" # "ID_001_lsl_data.mat"
 
-        print(f"Error : Folder not found -> {FILES_DIRECTORY}")
-
+    if not os.path.exists(FILES_DIRECTORY):
+        print(f"Error : Folder not found -> {FILES_DIRECTORY}") # the path towards the files doesn't exist.
     else:
 
-        files = [f for f in os.listdir(FILES_DIRECTORY) if f.endswith(".mat")] # Retrieving the file's names.
-        all_data = [] # We initiate a list where to put everything we processed at the end.
+        if TEST_FILE: # If a TEST_FILE was entered, then we use the TEST MODE.
+            files = [TEST_FILE]
+            print(f"--- TEST MODE : treating {TEST_FILE} ---")
+        else:
+            files = [f for f in os.listdir(FILES_DIRECTORY) if f.endswith(".mat")] # Just proceed as intended.
+            print(f"Starting processing of {len(files)} files...")
 
-        print(f"Starting processing of {len(files)} files...")
+        all_data = []
 
-        for f in files: # We iterate on the files.
+        for f in files: # Iterate on the files, concatenate, etc.
             try:
-                res = process_participants(f) # launch the fun on the file.
-                all_data.append(res) # We add to all_data the result of the fun
+                res = process_participants(f)
+                all_data.append(res)
                 print(f"Success for {f}!")
             except Exception as e:
+                # C'est ici que tu verras tes erreurs s'il y en a
                 print(f"Failure for {f}! Error: {e}")
 
-        if all_data: # If the process went without issues...
-            final_df = pd.concat(all_data, ignore_index = True) # we build a pandas dataframe.
-            final_df.to_csv(OUTPUT_PATH, index = False) # We export it to CSV.
-            print(f"\nData processing is done. File {OUTPUT_PATH} has been saved.")
+        # Exportation
+        if all_data:
+            final_df = pd.concat(all_data, ignore_index=True)
+            output_dir = os.path.dirname(OUTPUT_PATH)
+            
+            if TEST_FILE:
+                file_name = f"test_{TEST_FILE.replace('.mat', '.csv')}"
+                output_name = os.path.join(output_dir, file_name)
+                
+            else:
+                output_name = OUTPUT_PATH
+                
+            final_df.to_csv(output_name, index=False)
+            print(f"\nProcessing done. File {output_name} saved.")
