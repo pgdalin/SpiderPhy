@@ -6,11 +6,11 @@ lsl_data <- read.csv("../Python/output/test_ID_001_lsl_data.csv", fileEncoding =
 
 # -------------------------------------------------------------------------
 
-glimpse(data)
+glimpse(lsl_data)
 
 # -------------------------------------------------------------------------
 
-data |> 
+lsl_data |> 
   filter(is_baseline == 0) |> 
   summarise(count = n())
 

@@ -40,7 +40,6 @@ sapply(1:22, function(i) raw_mat[["lsl.data"]][[1]][[1]][[1]][[18]][[1]][[1]][[i
 # 
 # Let's check the rest of the content with the viewer.
 
-
 vec <- as.numeric(sapply(1:689, function(i) raw_mat[["lsl.data"]][[1]][[1]][[1]][[19]][[1]][[i]][[1]][[1]]))
 
 round(vec - lag(vec), digits = 3)
@@ -55,7 +54,7 @@ sapply(1:689, function(i) raw_mat[["lsl.data"]][[1]][[1]][[1]][[19]][[1]][[i]][[
 
 View(raw_mat[["lsl.data"]][[1]][[1]][[2]])
 
-# Here it is. I'll pivot this and add the names of the cols.
+# Here it is.
 
 names <- c("confidence",       "norm_pos_x",      
            "norm_pos_y",       "gaze_point_3d_x", 
