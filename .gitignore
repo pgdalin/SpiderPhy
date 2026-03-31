@@ -1,11 +1,9 @@
 osf_files/
-
 Python/output/
 Python/.venv/
 Python/rclone-ignore.txt
 Python/scripts/.vscode/
 Python/scripts/scripts.code-workspace
-
 R/output/
 R/renv/library/
 R/scripts/dump/
