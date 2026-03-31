@@ -15,10 +15,20 @@ consolidated_data |>
                    \(x) sum(is.na(x)),
                    .names = "{.col}_na_count"))
 
-# More than a few NAs here... We have to investigate. Let's build a mask and only keep rows where there's an NA.
+# More than a few NAs here... 
 
-consolidated_data |> 
-  filter(if_any(everything(), is.na)) |> 
-  View()
+consolidated_data |>
+  group_by(picture_id) |> 
+  summarize(count = n())
+  # View()
 
-# There is actually quite a lot of NAs there... It's not only one participant but several. I'm not sure I should waste time figuring out what's going on now.
+# I just noticed while running heatmap_generation.py that some file names have issues like ending with .JPG or missing the "S" at the beginning of "Spider"
+
+consolidated_data <- consolidated_data |> 
+  mutate(picture_id = str_replace(picture_id, ".JPG$", ".jpg"),
+         picture_id = str_replace(picture_id, "^p", "Sp"),
+         picture_id = str_replace(picture_id, " ", ""))
+
+OUTPUT_FINAL <- "output/final_consolidated_data.csv"
+
+write_csv(consolidated_data, OUTPUT_FINAL)

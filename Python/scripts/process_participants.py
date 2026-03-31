@@ -27,6 +27,7 @@ def apply_butterworth_filter(DATA, LOW, HIGH, SAMPLING_RATE, ORDER):
 # This function will allow to gather the data specific to trials.
 
 def extract_trial_stats(DF_PHYSIO, DF_EYE, MARKERS_STRUCT):
+    
     codes = np.array(MARKERS_STRUCT.time_series).flatten() # Flattening to prevent dimension errors.
     times = np.array(MARKERS_STRUCT.time_stamps).flatten()
     df_events = pd.DataFrame({'events': codes, 'time': times})
