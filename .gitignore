@@ -16,6 +16,10 @@ R/renv/staging/
 R/renv/local/
 
 R/scripts/dump/
+R/scripts/02_psychometrics_exploration.R
+R/scripts/02_statistical_analysis.R
+R/scripts/consolidated_data_exploration.R
+R/scripts/.Rhistory
 
 R/.Rproj.user/
 R/.Rhistory
