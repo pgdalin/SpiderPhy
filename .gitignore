@@ -4,21 +4,13 @@ Python/output/
 Python/.venv/
 Python/rclone-ignore.txt
 
-Python/scripts/testing_zed_jupyter.py
-Python/scripts/inspect_lsl_stream.py
-Python/scripts/explore_structure.ipynb
-Python/scripts/draft.ipynb
-
-R/output/
+Python/scripts/dump/
 
 R/renv/library/
 R/renv/staging/
 R/renv/local/
 
 R/scripts/dump/
-R/scripts/02_psychometrics_exploration.R
-R/scripts/02_statistical_analysis.R
-R/scripts/consolidated_data_exploration.R
 R/scripts/.Rhistory
 
 R/.Rproj.user/

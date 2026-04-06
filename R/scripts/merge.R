@@ -11,12 +11,19 @@ library(janitor)
 
 # -------------------------------------------------------------------------
 
+# rating_data contains a file per participants rating the stimuli on several
+# scales.
+# processed_physio.csv is the result of running process_mat.py.
+
 PATH_STIMULI <- "../osf_files/rating_data/" 
 PATH_PHYSIO  <- "../Python/output/processed_physio.csv" 
 OUTPUT_FINAL <- "output/final_consolidated_data.csv" 
 
 # -------------------------------------------------------------------------
 
+# Deleting baselines not followed by trials.
+# Deleting baselines if last row.
+# Creating trial_number variable to help merge with ratings.
 
 physio_raw <- read_csv(PATH_PHYSIO) |>
   mutate(participant_id = as.double(participant_id)) |> 
@@ -32,7 +39,13 @@ physio_raw <- read_csv(PATH_PHYSIO) |>
 
 # -------------------------------------------------------------------------
 
+# Gathering all file names in the directory.
+
 stimuli_files <- list.files(path = PATH_STIMULI, pattern = "^ID_.*\\.csv$", full.names = TRUE, recursive = FALSE) 
+
+# For all rating files:
+# We clean the names.
+# We create cols to merge with physio data.
 
 all_stimuli <- stimuli_files |>
   map_dfr(function(file) { 
@@ -48,6 +61,9 @@ all_stimuli <- stimuli_files |>
 
 # -------------------------------------------------------------------------
 
+# We merge the files and create cols separating elements from picture_id to have
+# conditions.
+
 final_dataset <- all_stimuli |>
   left_join(physio_raw, by = c("participant_id", "trial_seq_id" = "trial_number")) |> 
   mutate(
@@ -59,6 +75,15 @@ final_dataset <- all_stimuli |>
       TRUE ~ "Unknown" 
     )
   )
+
+# -------------------------------------------------------------------------
+
+# Running heatmaps.py indicated several typos in the picture_id col. Fix:
+
+final_dataset <- final_dataset |> 
+  mutate(picture_id = str_replace(picture_id, ".JPG$", ".jpg"),
+         picture_id = str_replace(picture_id, "^p", "Sp"),
+         picture_id = str_replace(picture_id, " ", ""))
 
 # -------------------------------------------------------------------------
 
