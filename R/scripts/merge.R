@@ -63,6 +63,7 @@ all_stimuli <- stimuli_files |>
 
 # We merge the files and create cols separating elements from picture_id to have
 # conditions.
+# Also, we only need to keep the Spider pictures.
 
 final_dataset <- all_stimuli |>
   left_join(physio_raw, by = c("participant_id", "trial_seq_id" = "trial_number")) |> 
@@ -74,6 +75,9 @@ final_dataset <- all_stimuli |>
       condition_code %in% c("CR", "CL", "SX") ~ "Control_Spider", 
       TRUE ~ "Unknown" 
     )
+  ) |> 
+  filter(
+    condition_code == "Sp"
   )
 
 # -------------------------------------------------------------------------
@@ -84,6 +88,14 @@ final_dataset <- final_dataset |>
   mutate(picture_id = str_replace(picture_id, ".JPG$", ".jpg"),
          picture_id = str_replace(picture_id, "^p", "Sp"),
          picture_id = str_replace(picture_id, " ", ""))
+
+# -------------------------------------------------------------------------
+
+# We need to add the quartile for fear_rating.
+
+final_dataset <- final_dataset |> 
+  group_by(participant_id) |> 
+  mutate(fear_rating_per_p = ntile(rating, n = 4))
 
 # -------------------------------------------------------------------------
 

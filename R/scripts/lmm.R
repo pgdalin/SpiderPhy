@@ -1,66 +1,79 @@
-# -------------------------------------------------------------------------
-
-# This script has as a goal to analyse using a mixed models effet, the role of
-# each dependant variable on independant variables computed by process_mat.py.
-
 library(tidyverse)
 library(lmerTest)
 library(broom.mixed)
+library(glue)
+
 
 # -------------------------------------------------------------------------
 
-data <- read.csv("../R/output/final_consolidated_data.csv")
+data <- read.csv("./output/final_consolidated_data.csv")
 
 # -------------------------------------------------------------------------
 
-# We divide each picture in 4 quartiles using fear ratings. We will compare each
-# expecting a linear tendency.
+select_best_model <- function(m_simple, m_pente, m_full) {
+  p_pente <- anova(m_simple, m_pente)[["Pr(>Chisq)"]][2]
+  
+  if (is.na(p_pente) || p_pente >= 0.05) {
+    return(list(formula = formula(m_simple), type = "Simple (intercepts only)"))
+  }
+  
+  p_corr <- anova(m_pente, m_full)[["Pr(>Chisq)"]][2]
+  
+  if (!is.na(p_corr) && p_corr < 0.05) {
+    list(formula = formula(m_full), type = "Full (intercept + pente + corr)")
+  } else {
+    list(formula = formula(m_pente), type = "Pente (intercept + pente, sans corr)")
+  }
+}
 
-data <- data |> 
-  group_by(participant_id) |> 
-  mutate(fear_rating_per_p = ntile(x = rating, 4))
-
-data <- data |> 
-  mutate(fear_rating_global = ntile(x = rating, 4))
-
-# Checking cor between global fear and per participants.
-
-cor(data$fear_rating_per_p, data$fear_rating_global, use = "complete.obs", method = "pearson")
-
-# 1 is crazy high, but hey that's has good has it gets.
+run_parsimonious_lmm <- function(vd_name, df) {
+  
+  make_formula <- function(random) {
+    as.formula(glue("{vd_name} ~ fear_rating_per_p + {random}"))
+  }
+  
+  f_simple <- make_formula("(1 | participant_id) + (1 | picture_id)")
+  f_pente  <- make_formula("(1 | picture_id) + (0 + fear_rating_per_p | participant_id)")
+  f_full   <- make_formula("(1 | picture_id) + (1 + fear_rating_per_p | participant_id)")
+  
+  fit <- function(f) lmer(f, data = df, REML = FALSE)
+  
+  best <- select_best_model(fit(f_simple), fit(f_pente), fit(f_full))
+  
+  # ✅ Refit avec REML = TRUE en utilisant la formule extraite
+  best_reml <- lmer(best$formula, data = df, REML = TRUE)
+  
+  best_reml |>
+    tidy(conf.int = TRUE) |>
+    filter(effect == "fixed", term != "(Intercept)") |>
+    mutate(
+      dependent_var      = vd_name,
+      selected_structure = best$type
+    ) |>
+    select(dependent_var, selected_structure, term, estimate, std.error, p.value, conf.low, conf.high)
+}
 
 # -------------------------------------------------------------------------
-
-# Those are all the dependant variables we computed in process_mat.py.
 
 vds <- c("bpm_ecg", "rmssd", "cardiac_deceleration", "scr_amplitude",
          "resp_std", "pupil_diam_raw", "pupil_dilation_speed", "gaze_dispersion")
 
-# This function runs a linear mixed model, returns à df.
+# -------------------------------------------------------------------------
 
-run_lmm <- function(vd_name, df) {
-  formula <- glue::glue("{vd_name} ~ as.factor(fear_rating_per_p) + (1 | participant_id) + (1 | picture_id)")
-  
-  lmer(as.formula(formula), data = df) |>
-    tidy(conf.int = TRUE) |>
-    filter(effect == "fixed", term != "(Intercept)") |>
-    mutate(dependent_var = vd_name) |>
-    select(dependent_var, term, estimate, std.error, statistic, p.value, conf.low, conf.high)
-}
-
-# We iterate the function run_lmm on each dependant variable of the dataset
-# using map().
-
-stats_summary <- tibble(vd = vds) |>
-  mutate(results = map(vd, run_lmm, df = data)) |>
+stats_finales <- tibble(vd = vds) |>
+  mutate(results = map(vd, run_parsimonious_lmm, df = data)) |>
   unnest(results) |>
   select(-vd) |>
-  arrange(dependent_var, term) |> 
-  mutate(across(where(is.numeric),
-                \(x) round(x, digits = 3)))
+  mutate(across(where(is.numeric), ~round(.x, 3))) |>
+  arrange(dependent_var, term)
 
-# print(stats_summary, n = Inf)
+# -------------------------------------------------------------------------
 
-# Writing the results in a CSV.
+stats_finales |>
+  distinct(dependent_var, selected_structure) |>
+  print()
 
-write.csv(stats_summary, file = "../R/output/mixted_effect_model.csv")
+# -------------------------------------------------------------------------
+
+# Résultats complets
+print(stats_finales)
