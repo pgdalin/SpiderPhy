@@ -28,7 +28,8 @@ data <- data |>
   group_by(participant_id) |>
   mutate(fear_rating_cwc = fear_rating_per_p - mean(fear_rating_per_p, na.rm = TRUE)) |>
   ungroup() |>
-  mutate(across(c(FSQ_pre, SAS_pre, SPQ, STAI), ~ scale(.x)[, 1],
+  mutate(across(c(FSQ_pre, SAS_pre, SPQ, STAI), 
+                ~ scale(.x)[, 1],
                 .names = "{.col}_z"))
 
 # ── Sélection parcimonieuse de la structure aléatoire ────────────────────────
