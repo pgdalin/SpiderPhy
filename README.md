@@ -1,6 +1,8 @@
 # SpiderPhy (OSF link: https://osf.io/98cnd/overview)
 
+
 <img width="616" height="462" alt="image" src="https://github.com/user-attachments/assets/8e1731fd-ca94-48a7-8955-267bc75e0fa5" />
+
 
 I would like to thank the original authors of the SpiderPhy project for making their dataset available under Open Science principles: Cindy Lor, David Steyrl, Alexander Karner, Sebastian Götzenderfer, Anne Klimesch, Stephanie J. Eder, Fabian Renz, Johannes Rother, Filip Melinscak & Frank Scharnowski.
 
