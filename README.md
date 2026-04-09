@@ -43,3 +43,7 @@ As a recent Master’s graduate in Applied Cognitive Psychology (University of P
 - Statistics: Applying LMMs to capture the complexity of human behavior.
 - Open Science: Promoting reproducible research through well-documented code.
 
+# How to reach me?
+
+pablo.dalin@gmail.com
+
