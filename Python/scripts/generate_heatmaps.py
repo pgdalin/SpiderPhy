@@ -28,16 +28,16 @@ OUTPUT_PATH = os.path.abspath("../output/heatmaps/")
 
 # A factor of 2.0 stretches gaze points by 200% around the screen center.
 # This compensates for the camera field of view being larger than the display area,
-# effectively "zooming in" gaze coordinates to match the stimulus boundaries.
+#   effectively "zooming in" gaze coordinates to match the stimulus boundaries.
 # The correct value for this dataset is 4, determined through successive iterations,
-# until the heatmaps were aligned with visible spiders.
+#   until the heatmaps were aligned with visible spiders.
 SCALING_FACTOR = 4
 
 # ── Temporal Filtering Configuration ─────────────────────────────────────────
 
 # Retain only gaze samples between 1.5 s and 2.5 s after trial onset.
 # The first 1.5 s are discarded to skip the initial fixation cross period
-# and capture the orienting response toward the spider stimulus.
+#   and capture the orienting response toward the spider stimulus.
 TIME_WINDOW_START = 2.5
 TIME_WINDOW_END = 5
 
@@ -94,7 +94,7 @@ def process_heatmaps():
     # ── Remove Fixation-Cross Samples ─────────────────────────────────────────
 
     # Gaze locked exactly at (0.5, 0.5) indicates a fixation cross artefact,
-    # not a true look toward the stimulus.
+    #   not a true look toward the stimulus.
     df_heat = df_heat[~((df_heat["x"] == 0.5) & (df_heat["y"] == 0.5))]
 
     # ── Per-Image Heatmap Generation ──────────────────────────────────────────
@@ -118,7 +118,7 @@ def process_heatmaps():
         # ── Outlier Rejection (IQR Method) ────────────────────────────────────
 
         # Remove extreme saccades or tracker artefacts along each axis
-        # using 1.5 × IQR fences (equivalent to Tukey's boxplot rule).
+        #   using 1.5 * IQR fences (equivalent to Tukey's boxplot rule).
         for axis in [0, 1]:
             q1, q3 = np.percentile(points[:, axis], [25, 75])
             iqr = q3 - q1
@@ -132,14 +132,14 @@ def process_heatmaps():
 
         # Expand gaze coordinates outward from the screen center (0.5, 0.5).
         # This corrects for the mismatch between the camera field of view and
-        # the actual display area, spreading points across the full image extent.
+        #   the actual display area, spreading points across the full image extent.
         points[:, 0] = (points[:, 0] - 0.5) * SCALING_FACTOR + 0.5
         points[:, 1] = (points[:, 1] - 0.5) * SCALING_FACTOR + 0.5
 
         # ── Out-of-Bounds Filtering ────────────────────────────────────────────
 
         # After scaling, some points may fall outside the [0, 1] normalised range;
-        # discard them to avoid wrapping artefacts in the histogram.
+        #   discard them to avoid wrapping artefacts in the histogram.
         mask = (
             (points[:, 0] >= 0)
             & (points[:, 0] <= 1)
@@ -159,7 +159,7 @@ def process_heatmaps():
                 width, height = im.size
 
                 # Downsample the histogram grid relative to the image resolution
-                # to smooth out sparse gaze distributions.
+                #   to smooth out sparse gaze distributions.
                 res_scale = 10
                 heatmap, _, _ = np.histogram2d(
                     1 - points[:, 1],  # Y-axis flipped: 0 at top, 1 at bottom.
@@ -169,11 +169,11 @@ def process_heatmaps():
                 )
 
                 # Apply Gaussian smoothing to produce continuous density blobs
-                # rather than hard-edged histogram bins.
+                #   rather than hard-edged histogram bins.
                 heatmap = gaussian_filter(heatmap, sigma=5)
 
                 # Overlay the heatmap (jet colormap, semi-transparent) on the
-                # original stimulus image and save the result.
+                #   original stimulus image and save the result.
                 plt.figure(figsize=(10, 6))
                 plt.imshow(im)
                 plt.imshow(
