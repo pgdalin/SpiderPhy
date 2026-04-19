@@ -38,8 +38,8 @@ SCALING_FACTOR = 4
 # Retain only gaze samples between 1.5 s and 2.5 s after trial onset.
 # The first 1.5 s are discarded to skip the initial fixation cross period
 #   and capture the orienting response toward the spider stimulus.
-TIME_WINDOW_START = 2.5
-TIME_WINDOW_END = 5
+TIME_WINDOW_START = 1.5
+TIME_WINDOW_END = 2.5
 
 
 # ── Main Pipeline ─────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ def process_heatmaps():
                 plt.axis("off")
 
                 img_stem = os.path.splitext(img_name)[0]
-                save_name = f"heatmap_{img_stem}_2_5_5_0.png"
+                save_name = f"heatmap_{img_stem}_1_5_2_5.png"
                 plt.savefig(
                     os.path.join(OUTPUT_PATH, save_name),
                     bbox_inches="tight",

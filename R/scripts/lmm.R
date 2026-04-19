@@ -4,13 +4,13 @@
 #
 # Purpose:
 # 
-#   Fit LMMs examining whether trial-level fear ratings and participant-level
-#   arachnophobia scores (and their interaction) predict physiological
-#   responses across eight dependent variables.
+#   - Fit LMMs examining whether trial-level fear rating_cwcs and participant-level;
+#   - arachnophobia scores (and their interaction) predict physiological;
+#   - responses across eight dependent variables.
 #
 # Design:
 # 
-#   - Level 1 (trial): fear_rating_cwc (within-person centered);
+#   - Level 1 (trial): fear_rating_cwc_cwc (within-person centered);
 #   - Level 2 (participant): psychometric scales (grand-mean standardized);
 #   - Cross-level interaction tested in a separate model set.
 #
@@ -62,9 +62,9 @@ dvs <- c(
 
 # Predictor Centering -----------------------------------------------------
 
-# Group-mean centering (within-person) for the trial-level fear rating:
+# Group-mean centering (within-person) for the trial-level fear rating_cwc:
 # 
-# - fear_rating_cwc separates within-person variation (L1) from the
+# - rating_cwc separates within-person variation (L1) from the
 # - participant mean (L2), preventing conflation of between- and 
 #     within-person effects.
 #
@@ -76,9 +76,14 @@ dvs <- c(
 data <- data |>
   group_by(participant_id) |>
   mutate(
-    fear_rating_cwc = fear_rating_per_p - mean(fear_rating_per_p, na.rm = TRUE)
+    rating_cwc = rating - mean(rating, na.rm = TRUE),   # within
+    rating_pm  = mean(rating, na.rm = TRUE)             # between-person mean
   ) |>
   ungroup() |>
+  mutate(
+    rating_cwc_z = as.numeric(scale(rating_cwc)),
+    rating_pm_z  = as.numeric(scale(rating_pm))
+  ) |> 
   mutate(
     across(
       c(FSQ_pre, SAS_pre, SPQ, STAI),
@@ -133,16 +138,12 @@ select_best_model <- function(m_simple, m_pente, m_full) {
 
 # Main Effects of Psychometric Scales (Between-Person) --------------------
 
-# Research question:
-# 
-# 
 # Do individuals who score higher on arachnophobia measures show globally 
 #   stronger physiological responses, independent of trial-level fear?
 # 
+# Model: DV ~ fear_rating_cwc_cwc + PSY_z + {random_structure}
 #
-# Model: DV ~ fear_rating_cwc + PSY_z + {random_structure}
-#
-# fear_rating_cwc is included as a covariate to partial out within-trial
+# fear_rating_cwc_cwc is included as a covariate to partial out within-trial
 #   variance before estimating the between-person PSY effect.
 #
 # Arguments:
@@ -159,12 +160,12 @@ select_best_model <- function(m_simple, m_pente, m_full) {
 run_lmm_main_effect <- function(dv_name, psy_name, df) {
 
   make_formula <- function(random_spec) {
-    as.formula(glue("{dv_name} ~ fear_rating_cwc + {psy_name} + {random_spec}"))
+    as.formula(glue("{dv_name} ~ rating_cwc_z + rating_pm_z + {psy_name} + {random_spec}"))
   }
 
   f_simple <- make_formula("(1 | participant_id) + (1 | picture_id)")
-  f_slope  <- make_formula("(1 | picture_id) + (0 + fear_rating_cwc | participant_id)")
-  f_full   <- make_formula("(1 | picture_id) + (1 + fear_rating_cwc | participant_id)")
+  f_slope  <- make_formula("(1 | picture_id) + (0 + rating_cwc | participant_id)")
+  f_full   <- make_formula("(1 | picture_id) + (1 + rating_cwc | participant_id)")
 
   fit <- function(f) lmer(f, data = df, REML = FALSE)
 
@@ -197,20 +198,20 @@ run_lmm_main_effect <- function(dv_name, psy_name, df) {
 #   with higher arachnophobia scores?
 #   
 #
-# Model: DV ~ fear_rating_cwc * PSY_z + {random_structure}
+# Model: DV ~ fear_rating_cwc_cwc * PSY_z + {random_structure}
 #
-# The interaction term (fear_rating_cwc:PSY_z) tests whether the L1 slope
+# The interaction term (fear_rating_cwc_cwc:PSY_z) tests whether the L1 slope
 #   varies as a function of the L2 psychometric score.
 
 run_lmm_interaction <- function(dv_name, psy_name, df) {
 
   make_formula <- function(random_spec) {
-    as.formula(glue("{dv_name} ~ fear_rating_cwc * {psy_name} + {random_spec}"))
+    as.formula(glue("{dv_name} ~ rating_cwc * {psy_name} + rating_pm_z + {random_spec}"))
   }
 
   f_simple <- make_formula("(1 | participant_id) + (1 | picture_id)")
-  f_slope  <- make_formula("(1 | picture_id) + (0 + fear_rating_cwc | participant_id)")
-  f_full   <- make_formula("(1 | picture_id) + (1 + fear_rating_cwc | participant_id)")
+  f_slope  <- make_formula("(1 | picture_id) + (0 + rating_cwc | participant_id)")
+  f_full   <- make_formula("(1 | picture_id) + (1 + rating_cwc | participant_id)")
 
   fit <- function(f) lmer(f, data = df, REML = FALSE)
 
@@ -253,17 +254,23 @@ results_main <- combinations |>
   mutate(results = map2(dv, psy, run_lmm_main_effect, df = data)) |>
   unnest(results) |>
   select(-dv, -psy) |>
+  mutate(across(where(is.numeric), \(x) round(x, digits = 3))) |> 
+  mutate(p_fdr = p.adjust(p.value, method = "BH")) |> 
   mutate(across(where(is.numeric), \(x) round(x, digits = 3)))
 
 results_interaction <- combinations |>
   mutate(results = map2(dv, psy, run_lmm_interaction, df = data)) |>
   unnest(results) |>
   select(-dv, -psy) |>
+  mutate(across(where(is.numeric), \(x) round(x, digits = 3))) |> 
+  mutate(p_fdr = p.adjust(p.value, method = "BH")) |> 
   mutate(across(where(is.numeric), \(x) round(x, digits = 3)))
 
 results_all <- bind_rows(results_main, results_interaction) |>
-  mutate(across(where(is.numeric), \(x) round(.x, 3))) |>
-  arrange(model_type, dependent_var, psychometric, term)
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  arrange(model_type, dependent_var, psychometric, term) |> 
+  mutate(p_fdr = p.adjust(p.value, method = "BH")) |> 
+  mutate(across(where(is.numeric), \(x) round(x, digits = 3)))
 
 
 

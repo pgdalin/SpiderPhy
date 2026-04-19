@@ -2,11 +2,11 @@ osf_files/
 
 Python/rclone-ignore.txt
 
-Python/output/
 Python/.venv/
-Python/scripts/gaze_data_retrieval.py
+Python/output/
 
 Python/scripts/dump/
+Python/output/heatmaps/
 
 .Rproj.user
 
@@ -14,8 +14,12 @@ R/config.R
 R/run_pipeline.R
 R/.Rhistory
 R/.Rprofile
+R/index.qmd
 
-R/doc/
+R/doc/rendu_pdf.pdf
+R/doc/rendu_quarto.html
+R/doc/rendu_quarto.qmd
+R/output/
 R/.Rproj.user/
 R/scripts/.Rhistory
 
