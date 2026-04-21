@@ -37,7 +37,7 @@ Located in the /R directory, focusing on analytics:
 
 # Why?
 
-As a recent Master’s graduate in Applied Cognitive Psychology (University of Paris Cité), I developed this project to bridge the gap between psychological theory and data science. My focus is on:
+I developed this project to bridge the gap between psychological theory and data science. My focus is on:
 
 - Pipeline Automation: Building robust workflows for noisy biological data.
 - Statistics: Applying LMMs to capture the complexity of human behavior.
